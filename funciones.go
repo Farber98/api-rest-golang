@@ -3,16 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"gopkg.in/mgo.v2/bson"
 )
-
-/* Creamos una variable de Peliculas, un slice que contiene objetos Pelicula. */
-var peliculas = Peliculas{
-	Pelicula{"Soul", 2020, "Yona Tan"},
-	Pelicula{"Habia una vez", 2015, "Un Bru"},
-	Pelicula{"Hey Ya", 1995, "Yayaya"}}
 
 /*Index es la funcion que se ejecuta al acceder a "/" */
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -21,15 +17,41 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 /*ListarPeliculas es la funcion que se ejecuta al acceder a "/peliculas" */
 func ListarPeliculas(w http.ResponseWriter, r *http.Request) {
-	/* Indicamos que escriba w y que los datos vienen de slice peliculas.*/
-	json.NewEncoder(w).Encode(peliculas)
+
+	/* Se obtiene resultados o error del metodo ListarBD.*/
+	resultados, err := ListarBD("videoclub", "peliculas")
+
+	/* Si es que existe, agarramos el error */
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	Response(w, 200, resultados)
 }
 
 /*DamePelicula es la funcion que se ejecuta al acceder a "/peliculas/{id}" */
 func DamePelicula(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r) //Obtengo el id de la req en la url.
 	IDPelicula := params["id"]
-	fmt.Fprintf(w, "Pelicula numero %s seleccionada", IDPelicula)
+
+	/* Si ID no es hex, tira error y corta ejec. */
+	if !bson.IsObjectIdHex(IDPelicula) {
+		w.WriteHeader(404)
+		return
+	}
+
+	/* Convertimos ID a hexa. */
+	ObjectID := bson.ObjectIdHex(IDPelicula)
+
+	resultados, err := DameBD("videoclub", "peliculas", ObjectID)
+
+	/* Si hay error, cortamos ejec. */
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	Response(w, 200, resultados)
 }
 
 /*AgregarPelicula es la funcion que se ejecuta al acceder a "/pelicula" */
@@ -58,8 +80,5 @@ func AgregarPelicula(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 	}
 
-	/* Escribimos la respuesta exitosa. */
-	json.NewEncoder(w).Encode(datosPelicula)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200) // Codigo de exito
+	Response(w, 200, datosPelicula)
 }
