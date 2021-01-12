@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -35,18 +34,32 @@ func DamePelicula(w http.ResponseWriter, r *http.Request) {
 
 /*AgregarPelicula es la funcion que se ejecuta al acceder a "/pelicula" */
 func AgregarPelicula(w http.ResponseWriter, r *http.Request) {
+
 	/* Recibe los parametros que me llega por POST en la req */
+
 	decoder := json.NewDecoder(r.Body)
+
 	/* Convertimos lo recibido en algo que podamos utilizar */
 	var datosPelicula Pelicula
+
 	/* Agarramos el error en caso de haber uno*/
 	err := decoder.Decode(&datosPelicula) // Como todavia no tiene nada ponemos &
 	if err != nil {
 		panic(err)
 	}
+
 	/* Limpiamos y cerramos la lectura con defer y close.*/
 	defer r.Body.Close()
-	log.Println(datosPelicula)
-	/*Sobreescribimos el slice agregando la nueva pelicula  */
-	peliculas = append(peliculas, datosPelicula)
+
+	/* Insertamos a la BD. */
+	errorInsert := InsertarBD("videoclub", "peliculas", datosPelicula)
+	if errorInsert != nil {
+		/* En caso de que no sea exitoso, codigo error. */
+		w.WriteHeader(500)
+	}
+
+	/* Escribimos la respuesta exitosa. */
+	json.NewEncoder(w).Encode(datosPelicula)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200) // Codigo de exito
 }
