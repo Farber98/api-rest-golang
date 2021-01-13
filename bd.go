@@ -36,3 +36,18 @@ func DameBD(db string, coleccion string, OID bson.ObjectId) (Pelicula, error) {
 	var resultados Pelicula
 	return resultados, Conexion().DB(db).C(coleccion).FindId(OID).One(&resultados)
 }
+
+/*ModificarBD recibe bd, coleccion y IDpelicula. Retorna error o un resultado.  */
+func ModificarBD(db string, coleccion string, OID bson.ObjectId, datosPelicula Pelicula) error {
+	/* Encontramos el documento a modificar. */
+	documento := bson.M{"_id": OID}
+	/* $set indica el update en mongodb */
+	cambio := bson.M{"$set": datosPelicula}
+	return Conexion().DB(db).C(coleccion).Update(documento, cambio)
+}
+
+/*EliminarBD ....  */
+func EliminarBD(db string, coleccion string, OID bson.ObjectId) error {
+	/* Borramos el elemento del OID. */
+	return Conexion().DB(db).C(coleccion).RemoveId(OID)
+}

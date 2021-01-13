@@ -22,7 +22,9 @@ var rutas = Rutas{
 	Ruta{"Index", "GET", "/", Index},
 	Ruta{"ListarPeliculas", "GET", "/peliculas", ListarPeliculas},
 	Ruta{"DamePelicula", "GET", "/peliculas/{id}", DamePelicula},
-	Ruta{"AgregarPelicula", "POST", "/pelicula", AgregarPelicula}}
+	Ruta{"AgregarPelicula", "POST", "/pelicula", AgregarPelicula},
+	Ruta{"ModificarPelicula", "PUT", "/pelicula/{id}", ModificarPelicula},
+	Ruta{"EliminarPelicula", "DELETE", "/pelicula/{id}", EliminarPelicula}}
 
 /*ConfiguroRouter devuelve la configuracion de rutas en var router.  */
 func ConfiguroRouter() *mux.Router {

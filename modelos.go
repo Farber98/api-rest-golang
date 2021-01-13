@@ -10,3 +10,9 @@ type Pelicula struct {
 
 /*Peliculas sera un slice de objetos Pelicula.  */
 type Peliculas []Pelicula
+
+/*Mensaje de exito o error. */
+type Mensaje struct {
+	Estado  string `json:"estado"`
+	Mensaje string `json:"mensaje"`
+}

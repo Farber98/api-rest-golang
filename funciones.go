@@ -82,3 +82,75 @@ func AgregarPelicula(w http.ResponseWriter, r *http.Request) {
 
 	Response(w, 200, datosPelicula)
 }
+
+/*ModificarPelicula es la funcion que se ejecuta al acceder a "/peliculas/{id}" por PUT*/
+func ModificarPelicula(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r) //Obtengo el id de la req en la url.
+	IDPelicula := params["id"]
+	var datosPelicula Pelicula
+
+	/* Si ID no es hex, tira error y corta ejec. */
+	if !bson.IsObjectIdHex(IDPelicula) {
+		w.WriteHeader(404)
+		return
+	}
+
+	/* Convertimos ID a hexa. */
+	ObjectID := bson.ObjectIdHex(IDPelicula)
+
+	/* Decodificamos el json que nos llega en la r y lo bindeamos a datosPelicula. */
+	decodificador := json.NewDecoder(r.Body)
+	err := decodificador.Decode(&datosPelicula)
+
+	/* En caso de que no pueda decodificar obtenemos error. */
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	/* Limpiamos el Body. */
+	defer r.Body.Close()
+
+	err = ModificarBD("videoclub", "peliculas", ObjectID, datosPelicula)
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	Response(w, 200, datosPelicula)
+}
+
+/*EliminarPelicula es la funcion que se ejecuta al acceder a "/peliculas/{id}" por DELETE */
+func EliminarPelicula(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r) //Obtengo el id de la req en la url.
+	IDPelicula := params["id"]
+	var peliculaBorrada Pelicula
+
+	/* Si ID no es hex, tira error y corta ejec. */
+	if !bson.IsObjectIdHex(IDPelicula) {
+		w.WriteHeader(404)
+		return
+	}
+
+	/* Convertimos ID a hexa. */
+	ObjectID := bson.ObjectIdHex(IDPelicula)
+
+	/* Obtengo pelicula antes de borrar para mostrar nombre. */
+	peliculaBorrada, errDame := DameBD("videoclub", "peliculas", ObjectID)
+	if errDame != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	errElim := EliminarBD("videoclub", "peliculas", ObjectID)
+
+	/* En caso de que no pueda borrar obtenemos error. */
+	if errElim != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	/* Devolvemos mensaje como response. */
+	resultado := Mensaje{"Exito", "La pelicula " + peliculaBorrada.Nombre + " ha sido borrada"}
+	Response(w, 200, resultado)
+}
